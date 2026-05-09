@@ -587,54 +587,58 @@ end
 Players.PlayerAdded:Connect(conectarJugador)
 
 local playerButtons = {}
-local y = 10
 
-local function crearBotonJugador(plr)
+local function actualizarListaPlayers()
 
-	if plr == player then return end
+	for _,boton in pairs(playerButtons) do
+		boton:Destroy()
+	end
 
-	local boton = Instance.new("TextButton")
-	boton.Size = UDim2.new(0,200,0,30)
-	boton.Position = UDim2.new(0,20,0,y)
-	boton.Text = "TP "..plr.Name
-	boton.Parent = framePlayers
+	playerButtons = {}
 
-	playerButtons[plr] = boton
-	y = y + 40
+	local y = 10
 
-	boton.MouseButton1Click:Connect(function()
+	for _,plr in pairs(Players:GetPlayers()) do
 
-		if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-			hrp.CFrame = plr.Character.HumanoidRootPart.CFrame + Vector3.new(2,0,0)
+		if plr ~= player then
+
+			local boton = Instance.new("TextButton")
+			boton.Size = UDim2.new(0,200,0,30)
+			boton.Position = UDim2.new(0,20,0,y)
+			boton.Text = "TP "..plr.Name
+			boton.Parent = framePlayers
+
+			playerButtons[plr] = boton
+
+			y += 40
+
+			boton.MouseButton1Click:Connect(function()
+
+				if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+
+					hrp.CFrame =
+						plr.Character.HumanoidRootPart.CFrame + Vector3.new(2,0,0)
+
+				end
+
+			end)
+
 		end
 
-	end)
-
-end
-
-
-local function eliminarBotonJugador(plr)
-
-	if playerButtons[plr] then
-		playerButtons[plr]:Destroy()
-		playerButtons[plr] = nil
 	end
 
 end
 
+actualizarListaPlayers()
 
-for _,plr in pairs(Players:GetPlayers()) do
-	crearBotonJugador(plr)
-end
-
-
-Players.PlayerAdded:Connect(function(plr)
-	crearBotonJugador(plr)
+Players.PlayerAdded:Connect(function()
+	task.wait(1)
+	actualizarListaPlayers()
 end)
 
-
-Players.PlayerRemoving:Connect(function(plr)
-	eliminarBotonJugador(plr)
+Players.PlayerRemoving:Connect(function()
+	task.wait(1)
+	actualizarListaPlayers()
 end)
 
 botonESP.MouseButton1Click:Connect(function()
