@@ -753,7 +753,7 @@ RunService.RenderStepped:Connect(function()
 		local cam = workspace.CurrentCamera
 		local lookVector = cam.CFrame.LookVector
 
-bodyGyro.CFrame = CFrame.lookAt(
+bodyGyro.CFrame = CFrame.new(hrp.Position, hrp.Position + cam.CFrame.LookVector)(
 	hrp.Position,
 	hrp.Position + lookVector,
 	Vector3.new(0,1,0)
@@ -763,11 +763,14 @@ bodyGyro.CFrame = CFrame.lookAt(
 
 		if direccion.Magnitude > 0 then
 
-	local moveDirection =
-		(cam.CFrame.LookVector * -direccion.Z) +
-		(cam.CFrame.RightVector * direccion.X)
+	local forward = cam.CFrame.LookVector
+	local right = cam.CFrame.RightVector
 
-	bodyVel.Velocity = moveDirection * velocidadVuelo
+	local moveDirection =
+		(forward * -direccion.Z) +
+		(right * direccion.X)
+
+	bodyVel.Velocity = moveDirection.Unit * velocidadVuelo
 
 else
 
