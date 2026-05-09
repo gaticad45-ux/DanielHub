@@ -756,17 +756,9 @@ RunService.RenderStepped:Connect(function()
 		local direccion = humanoid.MoveDirection
 
 		if direccion.Magnitude > 0 then
-
-			local moveDirection =
-				(cam.CFrame.LookVector * -direccion.Z) +
-				(cam.CFrame.RightVector * direccion.X)
-
-			bodyVel.Velocity = moveDirection.Unit * velocidadVuelo
-
+			bodyVel.Velocity = cam.CFrame.LookVector * velocidadVuelo
 		else
-
 			bodyVel.Velocity = Vector3.new(0,0,0)
-
 		end
 
 	end
