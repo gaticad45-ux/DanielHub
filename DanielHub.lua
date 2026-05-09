@@ -1,5 +1,7 @@
 local player = game.Players.LocalPlayer
 
+local Version = "v1.1"
+
 local char = player.Character or player.CharacterAdded:Wait()
 local humanoid = char:WaitForChild("Humanoid")
 local hrp = char:WaitForChild("HumanoidRootPart")
