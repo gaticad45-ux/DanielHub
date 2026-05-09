@@ -751,7 +751,13 @@ RunService.RenderStepped:Connect(function()
 	if volando and bodyVel then
 
 		local cam = workspace.CurrentCamera
-		bodyGyro.CFrame = cam.CFrame
+		local lookVector = cam.CFrame.LookVector
+
+bodyGyro.CFrame = CFrame.lookAt(
+	hrp.Position,
+	hrp.Position + lookVector,
+	Vector3.new(0,1,0)
+)
 
 		local direccion = humanoid.MoveDirection
 
