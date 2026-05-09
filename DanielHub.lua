@@ -688,9 +688,28 @@ end)
 
 -- CAMINAR
 botonCaminar.MouseButton1Click:Connect(function()
+
 	caminarActivo = not caminarActivo
-	humanoid.WalkSpeed = caminarActivo and velocidadCaminar or 16
-	botonCaminar.Text = caminarActivo and "Velocidad Caminar: ON" or "Velocidad Caminar: OFF"
+
+	if caminarActivo then
+		humanoid.WalkSpeed = velocidadCaminar
+	else
+		humanoid.WalkSpeed = 16
+	end
+
+	botonCaminar.Text =
+		caminarActivo and
+		"Velocidad Caminar: ON" or
+		"Velocidad Caminar: OFF"
+
+end)
+
+RunService.RenderStepped:Connect(function()
+
+	if caminarActivo and humanoid then
+		humanoid.WalkSpeed = velocidadCaminar
+	end
+
 end)
 
 -- SALTO
