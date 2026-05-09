@@ -708,13 +708,25 @@ botonNoclip.MouseButton1Click:Connect(function()
 end)
 
 RunService.Stepped:Connect(function()
-	if noclip and char then
+
+	if char then
+
 		for _,v in pairs(char:GetDescendants()) do
+
 			if v:IsA("BasePart") then
-				v.CanCollide=false
+
+				if noclip then
+					v.CanCollide = false
+				else
+					v.CanCollide = true
+				end
+
 			end
+
 		end
+
 	end
+
 end)
 
 -- VUELO
@@ -756,7 +768,7 @@ RunService.RenderStepped:Connect(function()
 		local direccion = humanoid.MoveDirection
 
 		if direccion.Magnitude > 0 then
-			bodyVel.Velocity = cam.CFrame.LookVector * velocidadVuelo * direccion.Z
+			bodyVel.Velocity = cam.CFrame.LookVector * velocidadVuelo
 		else
 			bodyVel.Velocity = Vector3.new(0,0,0)
 		end
