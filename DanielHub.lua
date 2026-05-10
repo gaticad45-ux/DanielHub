@@ -725,8 +725,6 @@ UIS.JumpRequest:Connect(function()
 end)
 
 -- NOCLIP
-local collisionOriginal = {}
-
 botonNoclip.MouseButton1Click:Connect(function()
 
 	noclip = not noclip
@@ -738,16 +736,10 @@ botonNoclip.MouseButton1Click:Connect(function()
 
 	if not noclip and char then
 
-		for _,v in pairs(char:GetDescendants()) do
+		for _,v in pairs(char:GetChildren()) do
 
 			if v:IsA("BasePart") then
-
-				if collisionOriginal[v] ~= nil then
-					v.CanCollide = collisionOriginal[v]
-				else
-					v.CanCollide = true
-				end
-
+				v.CanCollide = true
 			end
 
 		end
@@ -760,16 +752,10 @@ RunService.Stepped:Connect(function()
 
 	if noclip and char then
 
-		for _,v in pairs(char:GetDescendants()) do
+		for _,v in pairs(char:GetChildren()) do
 
 			if v:IsA("BasePart") then
-
-				if collisionOriginal[v] == nil then
-					collisionOriginal[v] = v.CanCollide
-				end
-
 				v.CanCollide = false
-
 			end
 
 		end
