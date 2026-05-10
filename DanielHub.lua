@@ -704,9 +704,9 @@ botonCaminar.MouseButton1Click:Connect(function()
 
 end)
 
-RunService.RenderStepped:Connect(function()
+humanoid:GetPropertyChangedSignal("WalkSpeed"):Connect(function()
 
-	if caminarActivo and humanoid then
+	if caminarActivo and humanoid.WalkSpeed ~= velocidadCaminar then
 		humanoid.WalkSpeed = velocidadCaminar
 	end
 
