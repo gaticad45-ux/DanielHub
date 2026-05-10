@@ -751,7 +751,6 @@ RunService.Stepped:Connect(function()
 	end
 
 end)
-
 -- VUELO
 local bodyVel
 local bodyGyro
