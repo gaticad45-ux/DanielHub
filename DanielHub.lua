@@ -725,21 +725,25 @@ UIS.JumpRequest:Connect(function()
 end)
 
 -- NOCLIP
+local collisionOriginal = {}
+
 botonNoclip.MouseButton1Click:Connect(function()
+
 	noclip = not noclip
-	botonNoclip.Text = noclip and "Atravesar paredes: ON" or "Atravesar paredes: OFF"
-end)
 
-RunService.Stepped:Connect(function()
+	botonNoclip.Text =
+		noclip and
+		"Atravesar paredes: ON" or
+		"Atravesar paredes: OFF"
 
-	if char then
+	if not noclip and char then
 
 		for _,v in pairs(char:GetDescendants()) do
 
 			if v:IsA("BasePart") then
 
-				if noclip then
-					v.CanCollide = false
+				if collisionOriginal[v] ~= nil then
+					v.CanCollide = collisionOriginal[v]
 				else
 					v.CanCollide = true
 				end
@@ -751,6 +755,29 @@ RunService.Stepped:Connect(function()
 	end
 
 end)
+
+RunService.Stepped:Connect(function()
+
+	if noclip and char then
+
+		for _,v in pairs(char:GetDescendants()) do
+
+			if v:IsA("BasePart") then
+
+				if collisionOriginal[v] == nil then
+					collisionOriginal[v] = v.CanCollide
+				end
+
+				v.CanCollide = false
+
+			end
+
+		end
+
+	end
+
+end)
+
 -- VUELO
 local bodyVel
 local bodyGyro
