@@ -1,7 +1,7 @@
 
 --========================================
 -- DANIELHUB v2
--- INTERFAZ VISUAL - NEON BLUE
+-- NEON BLUE - MOBILE READY
 --========================================
 
 local Players = game:GetService("Players")
@@ -11,18 +11,28 @@ local CoreGui = game:GetService("CoreGui")
 
 local player = Players.LocalPlayer
 
+--========================================
 -- LIMPIAR VERSION ANTERIOR
+--========================================
+
 local parentGui
 
-if gethui then
-    parentGui = gethui()
-else
+if type(gethui) == "function" then
+    local success, result = pcall(gethui)
+    if success and result then
+        parentGui = result
+    end
+end
+
+if not parentGui then
     parentGui = CoreGui
 end
 
 pcall(function()
     local old = parentGui:FindFirstChild("DanielHub_v2")
-    if old then old:Destroy() end
+    if old then
+        old:Destroy()
+    end
 end)
 
 local gui = Instance.new("ScreenGui")
@@ -67,13 +77,6 @@ local function stroke(obj, color, thickness, transparency)
     return s
 end
 
-local function gradient(obj, color1, color2)
-    local g = Instance.new("UIGradient")
-    g.Color = ColorSequence.new(color1, color2)
-    g.Rotation = 0
-    g.Parent = obj
-end
-
 local function label(parent, text, size, color, font)
     local l = Instance.new("TextLabel")
     l.BackgroundTransparency = 1
@@ -113,6 +116,7 @@ main.Position = UDim2.new(0.5, 0, 0.5, 0)
 main.AnchorPoint = Vector2.new(0.5, 0.5)
 main.BackgroundColor3 = C.Background
 main.Parent = gui
+
 corner(main, 15)
 stroke(main, C.Bright, 2, 0)
 
@@ -124,23 +128,53 @@ mainGradient.Color = ColorSequence.new({
 mainGradient.Rotation = 45
 mainGradient.Parent = main
 
--- Escala adaptable
+--========================================
+-- ESCALA ADAPTABLE
+--========================================
+
 local scale = Instance.new("UIScale")
 scale.Parent = main
+
+local cameraConnection
 
 local function updateScale()
     local camera = workspace.CurrentCamera
     if not camera then return end
 
     local viewport = camera.ViewportSize
+
+    local calculatedScale = math.min(
+        viewport.X / 390,
+        viewport.Y / 440
+    )
+
     scale.Scale = math.clamp(
-        math.min(viewport.X / 390, viewport.Y / 440),
+        calculatedScale,
         0.72,
         1
     )
 end
 
-updateScale()
+local function connectCamera()
+    if cameraConnection then
+        cameraConnection:Disconnect()
+    end
+
+    local camera = workspace.CurrentCamera
+    if not camera then return end
+
+    updateScale()
+
+    cameraConnection = camera:GetPropertyChangedSignal(
+        "ViewportSize"
+    ):Connect(updateScale)
+end
+
+workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(
+    connectCamera
+)
+
+connectCamera()
 
 --========================================
 -- BARRA SUPERIOR
@@ -151,26 +185,39 @@ top.Size = UDim2.new(1, -12, 0, 55)
 top.Position = UDim2.new(0, 6, 0, 5)
 top.BackgroundColor3 = C.Panel
 top.Parent = main
+
 corner(top, 10)
 stroke(top, C.Blue, 1, 0.45)
 
-local logo = label(top, "⚡ DANIEL", 22, C.White, Enum.Font.GothamBold)
+local logo = label(
+    top, "⚡ DANIEL", 22, C.White, Enum.Font.GothamBold
+)
 logo.Position = UDim2.new(0, 13, 0, 0)
 logo.Size = UDim2.new(0, 100, 1, 0)
 
-local hub = label(top, "HUB", 22, C.Bright, Enum.Font.GothamBold)
+local hub = label(
+    top, "HUB", 22, C.Bright, Enum.Font.GothamBold
+)
 hub.Position = UDim2.new(0, 111, 0, 0)
 hub.Size = UDim2.new(0, 50, 1, 0)
 
-local version = label(top, "v2", 11, C.Bright, Enum.Font.GothamBold)
+local version = label(
+    top, "v2", 11, C.Bright, Enum.Font.GothamBold
+)
 version.Position = UDim2.new(0, 164, 0, 0)
 version.Size = UDim2.new(0, 30, 1, 0)
 
-local close = makeButton(top, "X", UDim2.new(0, 32, 0, 30),
-    UDim2.new(1, -40, 0.5, -15))
+local close = makeButton(
+    top, "X",
+    UDim2.new(0, 32, 0, 30),
+    UDim2.new(1, -40, 0.5, -15)
+)
 
-local minimize = makeButton(top, "−", UDim2.new(0, 32, 0, 30),
-    UDim2.new(1, -80, 0.5, -15))
+local minimize = makeButton(
+    top, "−",
+    UDim2.new(0, 32, 0, 30),
+    UDim2.new(1, -80, 0.5, -15)
+)
 
 --========================================
 -- MENU LATERAL
@@ -181,10 +228,13 @@ sidebar.Size = UDim2.new(0, 112, 1, -70)
 sidebar.Position = UDim2.new(0, 7, 0, 65)
 sidebar.BackgroundColor3 = C.Panel
 sidebar.Parent = main
+
 corner(sidebar, 10)
 stroke(sidebar, C.Blue, 1, 0.65)
 
-local sideTitle = label(sidebar, "DANIELHUB", 10, C.Gray, Enum.Font.GothamBold)
+local sideTitle = label(
+    sidebar, "DANIELHUB", 10, C.Gray, Enum.Font.GothamBold
+)
 sideTitle.Size = UDim2.new(1, -10, 0, 25)
 sideTitle.Position = UDim2.new(0, 8, 0, 5)
 
@@ -204,7 +254,9 @@ local function createTab(icon, name, index)
     local button = Instance.new("TextButton")
     button.Name = name
     button.Size = UDim2.new(1, -10, 0, 42)
-    button.Position = UDim2.new(0, 5, 0, 32 + (index - 1) * 46)
+    button.Position = UDim2.new(
+        0, 5, 0, 32 + (index - 1) * 46
+    )
     button.BackgroundColor3 = C.Card2
     button.BackgroundTransparency = 1
     button.Text = icon .. "  " .. name
@@ -213,6 +265,7 @@ local function createTab(icon, name, index)
     button.Font = Enum.Font.GothamMedium
     button.AutoButtonColor = false
     button.Parent = sidebar
+
     corner(button, 8)
 
     tabs[name] = button
@@ -223,19 +276,27 @@ for i, data in ipairs(tabNames) do
     createTab(data[1], data[2], i)
 end
 
--- Estado inferior
+--========================================
+-- ESTADO INFERIOR
+--========================================
+
 local status = Instance.new("Frame")
 status.Size = UDim2.new(1, -10, 0, 43)
 status.Position = UDim2.new(0, 5, 1, -48)
 status.BackgroundColor3 = C.Card2
 status.Parent = sidebar
+
 corner(status, 8)
 
-local statusName = label(status, "ROBLOX", 10, C.White, Enum.Font.GothamBold)
+local statusName = label(
+    status, "ROBLOX", 10, C.White, Enum.Font.GothamBold
+)
 statusName.Position = UDim2.new(0, 8, 0, 4)
 statusName.Size = UDim2.new(1, -10, 0, 16)
 
-local statusText = label(status, "● Visual", 9, C.Green)
+local statusText = label(
+    status, "● Visual", 9, C.Green
+)
 statusText.Position = UDim2.new(0, 8, 0, 21)
 statusText.Size = UDim2.new(1, -10, 0, 15)
 
@@ -249,11 +310,15 @@ content.Position = UDim2.new(0, 125, 0, 65)
 content.BackgroundTransparency = 1
 content.Parent = main
 
-local pageTitle = label(content, "Principal", 20, C.White, Enum.Font.GothamBold)
+local pageTitle = label(
+    content, "Principal", 20, C.White, Enum.Font.GothamBold
+)
 pageTitle.Size = UDim2.new(1, -10, 0, 30)
 pageTitle.Position = UDim2.new(0, 5, 0, 3)
 
-local subtitle = label(content, "Funciones generales y de uso rápido.", 10, C.Gray)
+local subtitle = label(
+    content, "Funciones generales y de uso rápido.", 10, C.Gray
+)
 subtitle.Size = UDim2.new(1, -10, 0, 22)
 subtitle.Position = UDim2.new(0, 5, 0, 29)
 
@@ -265,6 +330,8 @@ page.BorderSizePixel = 0
 page.ScrollBarThickness = 3
 page.ScrollBarImageColor3 = C.Blue
 page.CanvasSize = UDim2.new(0, 0, 0, 0)
+page.AutomaticCanvasSize = Enum.AutomaticSize.Y
+page.ScrollingDirection = Enum.ScrollingDirection.Y
 page.Parent = content
 
 local layout = Instance.new("UIGridLayout")
@@ -288,10 +355,13 @@ local function createToggle(title, description, order)
     card.BackgroundColor3 = C.Card
     card.LayoutOrder = order
     card.Parent = page
+
     corner(card, 9)
     stroke(card, C.Blue, 1, 0.55)
 
-    local name = label(card, title, 11, C.White, Enum.Font.GothamBold)
+    local name = label(
+        card, title, 11, C.White, Enum.Font.GothamBold
+    )
     name.Position = UDim2.new(0, 9, 0, 7)
     name.Size = UDim2.new(1, -48, 0, 19)
 
@@ -306,6 +376,7 @@ local function createToggle(title, description, order)
     toggle.Text = ""
     toggle.Parent = card
     toggle.AutoButtonColor = false
+
     corner(toggle, 20)
 
     local circle = Instance.new("Frame")
@@ -313,23 +384,33 @@ local function createToggle(title, description, order)
     circle.Position = UDim2.new(0, 3, 0.5, -6)
     circle.BackgroundColor3 = C.White
     circle.Parent = toggle
+
     corner(circle, 20)
 
     local enabled = false
 
-    toggle.MouseButton1Click:Connect(function()
+    toggle.Activated:Connect(function()
         enabled = not enabled
 
-        TweenService:Create(toggle, TweenInfo.new(0.2), {
-            BackgroundColor3 = enabled and C.Blue
-                or Color3.fromRGB(55, 65, 80)
-        }):Play()
+        TweenService:Create(
+            toggle,
+            TweenInfo.new(0.2),
+            {
+                BackgroundColor3 = enabled
+                    and C.Blue
+                    or Color3.fromRGB(55, 65, 80)
+            }
+        ):Play()
 
-        TweenService:Create(circle, TweenInfo.new(0.2), {
-            Position = enabled
-                and UDim2.new(1, -16, 0.5, -6)
-                or UDim2.new(0, 3, 0.5, -6)
-        }):Play()
+        TweenService:Create(
+            circle,
+            TweenInfo.new(0.2),
+            {
+                Position = enabled
+                    and UDim2.new(1, -16, 0.5, -6)
+                    or UDim2.new(0, 3, 0.5, -6)
+            }
+        ):Play()
     end)
 
     return card
@@ -344,32 +425,43 @@ local function createNumber(title, initial, order)
     card.BackgroundColor3 = C.Card
     card.LayoutOrder = order
     card.Parent = page
+
     corner(card, 9)
     stroke(card, C.Blue, 1, 0.55)
 
-    local name = label(card, title, 10, C.White, Enum.Font.GothamBold)
+    local name = label(
+        card, title, 10, C.White, Enum.Font.GothamBold
+    )
     name.Position = UDim2.new(0, 8, 0, 5)
     name.Size = UDim2.new(1, -10, 0, 18)
 
     local value = initial
 
-    local minus = makeButton(card, "−", UDim2.new(0, 27, 0, 22),
-        UDim2.new(0.5, -48, 0, 32))
+    local minus = makeButton(
+        card, "−",
+        UDim2.new(0, 27, 0, 22),
+        UDim2.new(0.5, -48, 0, 32)
+    )
 
-    local number = label(card, tostring(value), 11, C.Bright, Enum.Font.GothamBold)
+    local number = label(
+        card, tostring(value), 11, C.Bright, Enum.Font.GothamBold
+    )
     number.TextXAlignment = Enum.TextXAlignment.Center
     number.Position = UDim2.new(0.5, -15, 0, 32)
     number.Size = UDim2.new(0, 30, 0, 22)
 
-    local plus = makeButton(card, "+", UDim2.new(0, 27, 0, 22),
-        UDim2.new(0.5, 20, 0, 32))
+    local plus = makeButton(
+        card, "+",
+        UDim2.new(0, 27, 0, 22),
+        UDim2.new(0.5, 20, 0, 32)
+    )
 
-    minus.MouseButton1Click:Connect(function()
+    minus.Activated:Connect(function()
         value = math.max(0, value - 10)
         number.Text = tostring(value)
     end)
 
-    plus.MouseButton1Click:Connect(function()
+    plus.Activated:Connect(function()
         value = value + 10
         number.Text = tostring(value)
     end)
@@ -382,18 +474,25 @@ end
 --========================================
 
 local function createAction(title, order)
-    local card = makeButton(page, "✦  " .. title,
-        UDim2.new(0, 0, 0, 43), UDim2.new(0, 0, 0, 0))
+    local card = makeButton(
+        page,
+        "✦  " .. title,
+        UDim2.new(0, 0, 0, 43),
+        UDim2.new(0, 0, 0, 0)
+    )
 
     card.LayoutOrder = order
     card.BackgroundColor3 = C.Card
     card.TextSize = 10
 
-    card.MouseButton1Click:Connect(function()
+    card.Activated:Connect(function()
         local old = card.BackgroundColor3
-        TweenService:Create(card, TweenInfo.new(0.15), {
-            BackgroundColor3 = C.Blue
-        }):Play()
+
+        TweenService:Create(
+            card,
+            TweenInfo.new(0.15),
+            {BackgroundColor3 = C.Blue}
+        ):Play()
 
         task.delay(0.2, function()
             if card.Parent then
@@ -433,7 +532,6 @@ local function setPage(name)
     end
 
     page.CanvasPosition = Vector2.new(0, 0)
-
     pageTitle.Text = name
 
     local descriptions = {
@@ -489,15 +587,10 @@ local function setPage(name)
         createAction("Interfaz visual", 3)
         createAction("Desarrollado por Daniel", 4)
     end
-
-    task.defer(function()
-        local size = layout.AbsoluteContentSize
-        page.CanvasSize = UDim2.new(0, 0, 0, size.Y + 15)
-    end)
 end
 
 for name, button in pairs(tabs) do
-    button.MouseButton1Click:Connect(function()
+    button.Activated:Connect(function()
         setPage(name)
     end)
 end
@@ -516,32 +609,35 @@ floating.Text = "⚡"
 floating.TextSize = 27
 floating.TextColor3 = C.Bright
 floating.Visible = false
+floating.AutoButtonColor = false
 floating.Parent = gui
-floating.Draggable = true
+
 corner(floating, 50)
 stroke(floating, C.Bright, 2, 0)
 
-minimize.MouseButton1Click:Connect(function()
+minimize.Activated:Connect(function()
     main.Visible = false
     floating.Visible = true
 end)
 
-floating.MouseButton1Click:Connect(function()
+floating.Activated:Connect(function()
     main.Visible = true
     floating.Visible = false
 end)
 
-close.MouseButton1Click:Connect(function()
+close.Activated:Connect(function()
     gui:Destroy()
 end)
 
 --========================================
--- MOVER VENTANA
+-- MOVIMIENTO MANUAL DE VENTANA
+-- COMPATIBLE CON MOUSE Y TOUCH
 --========================================
 
 local dragging = false
 local dragStart
 local startPosition
+local dragInput
 
 top.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1
@@ -550,15 +646,22 @@ top.InputBegan:Connect(function(input)
         dragging = true
         dragStart = input.Position
         startPosition = main.Position
+
+        if input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
     end
 end)
 
 UIS.InputChanged:Connect(function(input)
-    if dragging and (
-        input.UserInputType == Enum.UserInputType.MouseMovement
-        or input.UserInputType == Enum.UserInputType.Touch
-    ) then
+    if not dragging then return end
 
+    local isMouse = input.UserInputType ==
+        Enum.UserInputType.MouseMovement
+
+    local isTouch = dragInput and input == dragInput
+
+    if isMouse or isTouch then
         local delta = input.Position - dragStart
 
         main.Position = UDim2.new(
@@ -572,9 +675,83 @@ end)
 
 UIS.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1
-        or input.UserInputType == Enum.UserInputType.Touch then
+        or input == dragInput then
+
         dragging = false
+        dragInput = nil
     end
 end)
 
-print("DanielHub v2 - Interfaz visual cargada")
+--========================================
+-- MOVIMIENTO DEL BOTON FLOTANTE
+--========================================
+
+local floatingDragging = false
+local floatingStart
+local floatingPosition
+local floatingInput
+local floatingMoved = false
+
+floating.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch
+        or input.UserInputType == Enum.UserInputType.MouseButton1 then
+
+        floatingDragging = true
+        floatingStart = input.Position
+        floatingPosition = floating.Position
+        floatingMoved = false
+
+        if input.UserInputType == Enum.UserInputType.Touch then
+            floatingInput = input
+        end
+    end
+end)
+
+UIS.InputChanged:Connect(function(input)
+    if not floatingDragging then return end
+
+    local isMouse = input.UserInputType ==
+        Enum.UserInputType.MouseMovement
+
+    local isTouch = floatingInput and input == floatingInput
+
+    if isMouse or isTouch then
+        local delta = input.Position - floatingStart
+
+        if delta.Magnitude > 5 then
+            floatingMoved = true
+        end
+
+        floating.Position = UDim2.new(
+            floatingPosition.X.Scale,
+            floatingPosition.X.Offset + delta.X,
+            floatingPosition.Y.Scale,
+            floatingPosition.Y.Offset + delta.Y
+        )
+    end
+end)
+
+UIS.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+        or input == floatingInput then
+
+        floatingDragging = false
+        floatingInput = nil
+    end
+end)
+
+floating.Activated:Connect(function()
+    if floatingMoved then
+        floatingMoved = false
+        return
+    end
+
+    main.Visible = true
+    floating.Visible = false
+end)
+
+--========================================
+-- FINAL
+--========================================
+
+print("DanielHub v2 - Mobile Ready cargado")
