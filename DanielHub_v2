@@ -1,757 +1,771 @@
 
---========================================
--- DANIELHUB v2
--- NEON BLUE - MOBILE READY
---========================================
+--[[
+    DANIELHUB
+    MOBILE UI ONLY
+    DELTA EXECUTOR
+    INTERFAZ VISUAL + ACTUALIZAR JUGADORES
+]]
 
 local Players = game:GetService("Players")
 local UIS = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local CoreGui = game:GetService("CoreGui")
 
-local player = Players.LocalPlayer
+local Player = Players.LocalPlayer
+local PlayerGui = Player:WaitForChild("PlayerGui")
 
---========================================
--- LIMPIAR VERSION ANTERIOR
---========================================
-
-local parentGui
-
-if type(gethui) == "function" then
-    local success, result = pcall(gethui)
-    if success and result then
-        parentGui = result
-    end
-end
-
-if not parentGui then
-    parentGui = CoreGui
-end
-
+-- ELIMINAR VERSION ANTERIOR
 pcall(function()
-    local old = parentGui:FindFirstChild("DanielHub_v2")
-    if old then
-        old:Destroy()
-    end
+    local old = CoreGui:FindFirstChild("DANIELHUB")
+    if old then old:Destroy() end
 end)
 
-local gui = Instance.new("ScreenGui")
-gui.Name = "DanielHub_v2"
-gui.ResetOnSpawn = false
-gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-gui.Parent = parentGui
+pcall(function()
+    local old = PlayerGui:FindFirstChild("DANIELHUB")
+    if old then old:Destroy() end
+end)
 
---========================================
+-- INTERFAZ
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "DANIELHUB"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.DisplayOrder = 999
+
+local success = pcall(function()
+    ScreenGui.Parent = CoreGui
+end)
+
+if not success then
+    ScreenGui.Parent = PlayerGui
+end
+
 -- COLORES
---========================================
+local BG = Color3.fromRGB(5, 10, 21)
+local PANEL = Color3.fromRGB(9, 19, 35)
+local ITEM = Color3.fromRGB(13, 29, 49)
+local BLUE = Color3.fromRGB(0, 174, 255)
+local CYAN = Color3.fromRGB(0, 225, 255)
+local WHITE = Color3.fromRGB(240, 247, 255)
+local GRAY = Color3.fromRGB(145, 165, 185)
 
-local C = {
-    Background = Color3.fromRGB(5, 10, 22),
-    Panel = Color3.fromRGB(9, 18, 35),
-    Card = Color3.fromRGB(12, 27, 49),
-    Card2 = Color3.fromRGB(8, 20, 38),
-    Blue = Color3.fromRGB(0, 160, 255),
-    Bright = Color3.fromRGB(0, 210, 255),
-    White = Color3.fromRGB(235, 245, 255),
-    Gray = Color3.fromRGB(135, 160, 185),
-    Green = Color3.fromRGB(0, 220, 150),
-    Red = Color3.fromRGB(255, 65, 85)
-}
+-- ELEMENTOS
+local function new(class, props, parent)
+    local obj = Instance.new(class)
 
---========================================
--- FUNCIONES VISUALES
---========================================
-
-local function corner(obj, radius)
-    local u = Instance.new("UICorner")
-    u.CornerRadius = UDim.new(0, radius or 8)
-    u.Parent = obj
-end
-
-local function stroke(obj, color, thickness, transparency)
-    local s = Instance.new("UIStroke")
-    s.Color = color or C.Blue
-    s.Thickness = thickness or 1
-    s.Transparency = transparency or 0
-    s.Parent = obj
-    return s
-end
-
-local function label(parent, text, size, color, font)
-    local l = Instance.new("TextLabel")
-    l.BackgroundTransparency = 1
-    l.Text = text
-    l.TextSize = size or 14
-    l.TextColor3 = color or C.White
-    l.Font = font or Enum.Font.Gotham
-    l.TextXAlignment = Enum.TextXAlignment.Left
-    l.Parent = parent
-    return l
-end
-
-local function makeButton(parent, text, size, position)
-    local b = Instance.new("TextButton")
-    b.Size = size
-    b.Position = position
-    b.BackgroundColor3 = C.Card
-    b.Text = text
-    b.TextColor3 = C.White
-    b.TextSize = 13
-    b.Font = Enum.Font.GothamMedium
-    b.AutoButtonColor = false
-    b.Parent = parent
-    corner(b, 8)
-    stroke(b, C.Blue, 1, 0.35)
-    return b
-end
-
---========================================
--- VENTANA PRINCIPAL
---========================================
-
-local main = Instance.new("Frame")
-main.Name = "Main"
-main.Size = UDim2.new(0.94, 0, 0.68, 0)
-main.Position = UDim2.new(0.5, 0, 0.5, 0)
-main.AnchorPoint = Vector2.new(0.5, 0.5)
-main.BackgroundColor3 = C.Background
-main.Parent = gui
-
-corner(main, 15)
-stroke(main, C.Bright, 2, 0)
-
-local mainGradient = Instance.new("UIGradient")
-mainGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(8, 20, 40)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(3, 7, 17))
-})
-mainGradient.Rotation = 45
-mainGradient.Parent = main
-
---========================================
--- ESCALA ADAPTABLE
---========================================
-
-local scale = Instance.new("UIScale")
-scale.Parent = main
-
-local cameraConnection
-
-local function updateScale()
-    local camera = workspace.CurrentCamera
-    if not camera then return end
-
-    local viewport = camera.ViewportSize
-
-    local calculatedScale = math.min(
-        viewport.X / 390,
-        viewport.Y / 440
-    )
-
-    scale.Scale = math.clamp(
-        calculatedScale,
-        0.72,
-        1
-    )
-end
-
-local function connectCamera()
-    if cameraConnection then
-        cameraConnection:Disconnect()
+    for k, v in pairs(props) do
+        obj[k] = v
     end
 
-    local camera = workspace.CurrentCamera
-    if not camera then return end
-
-    updateScale()
-
-    cameraConnection = camera:GetPropertyChangedSignal(
-        "ViewportSize"
-    ):Connect(updateScale)
+    obj.Parent = parent
+    return obj
 end
 
-workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(
-    connectCamera
-)
-
-connectCamera()
-
---========================================
--- BARRA SUPERIOR
---========================================
-
-local top = Instance.new("Frame")
-top.Size = UDim2.new(1, -12, 0, 55)
-top.Position = UDim2.new(0, 6, 0, 5)
-top.BackgroundColor3 = C.Panel
-top.Parent = main
-
-corner(top, 10)
-stroke(top, C.Blue, 1, 0.45)
-
-local logo = label(
-    top, "⚡ DANIEL", 22, C.White, Enum.Font.GothamBold
-)
-logo.Position = UDim2.new(0, 13, 0, 0)
-logo.Size = UDim2.new(0, 100, 1, 0)
-
-local hub = label(
-    top, "HUB", 22, C.Bright, Enum.Font.GothamBold
-)
-hub.Position = UDim2.new(0, 111, 0, 0)
-hub.Size = UDim2.new(0, 50, 1, 0)
-
-local version = label(
-    top, "v2", 11, C.Bright, Enum.Font.GothamBold
-)
-version.Position = UDim2.new(0, 164, 0, 0)
-version.Size = UDim2.new(0, 30, 1, 0)
-
-local close = makeButton(
-    top, "X",
-    UDim2.new(0, 32, 0, 30),
-    UDim2.new(1, -40, 0.5, -15)
-)
-
-local minimize = makeButton(
-    top, "−",
-    UDim2.new(0, 32, 0, 30),
-    UDim2.new(1, -80, 0.5, -15)
-)
-
---========================================
--- MENU LATERAL
---========================================
-
-local sidebar = Instance.new("Frame")
-sidebar.Size = UDim2.new(0, 112, 1, -70)
-sidebar.Position = UDim2.new(0, 7, 0, 65)
-sidebar.BackgroundColor3 = C.Panel
-sidebar.Parent = main
-
-corner(sidebar, 10)
-stroke(sidebar, C.Blue, 1, 0.65)
-
-local sideTitle = label(
-    sidebar, "DANIELHUB", 10, C.Gray, Enum.Font.GothamBold
-)
-sideTitle.Size = UDim2.new(1, -10, 0, 25)
-sideTitle.Position = UDim2.new(0, 8, 0, 5)
-
-local tabNames = {
-    {"⌂", "Principal"},
-    {"◎", "Jugador"},
-    {"◇", "Mundo"},
-    {"ϟ", "Utilidades"},
-    {"⚙", "Ajustes"},
-    {"ⓘ", "Información"}
-}
-
-local tabs = {}
-local selectedTab = "Principal"
-
-local function createTab(icon, name, index)
-    local button = Instance.new("TextButton")
-    button.Name = name
-    button.Size = UDim2.new(1, -10, 0, 42)
-    button.Position = UDim2.new(
-        0, 5, 0, 32 + (index - 1) * 46
-    )
-    button.BackgroundColor3 = C.Card2
-    button.BackgroundTransparency = 1
-    button.Text = icon .. "  " .. name
-    button.TextColor3 = C.Gray
-    button.TextSize = 11
-    button.Font = Enum.Font.GothamMedium
-    button.AutoButtonColor = false
-    button.Parent = sidebar
-
-    corner(button, 8)
-
-    tabs[name] = button
-    return button
+local function corner(obj, radius)
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(0, radius)
+    c.Parent = obj
 end
 
-for i, data in ipairs(tabNames) do
-    createTab(data[1], data[2], i)
+local function stroke(obj, color, thickness)
+    local s = Instance.new("UIStroke")
+    s.Color = color
+    s.Thickness = thickness or 1
+    s.Transparency = 0.15
+    s.Parent = obj
 end
 
---========================================
--- ESTADO INFERIOR
---========================================
+-- ESCALA ADAPTABLE
+local Camera = workspace.CurrentCamera
+local viewport = Camera.ViewportSize
 
-local status = Instance.new("Frame")
-status.Size = UDim2.new(1, -10, 0, 43)
-status.Position = UDim2.new(0, 5, 1, -48)
-status.BackgroundColor3 = C.Card2
-status.Parent = sidebar
+local BASE_WIDTH = 560
+local BASE_HEIGHT = 460
 
-corner(status, 8)
-
-local statusName = label(
-    status, "ROBLOX", 10, C.White, Enum.Font.GothamBold
+local scale = math.min(
+    (viewport.X - 24) / BASE_WIDTH,
+    (viewport.Y - 24) / BASE_HEIGHT,
+    1
 )
-statusName.Position = UDim2.new(0, 8, 0, 4)
-statusName.Size = UDim2.new(1, -10, 0, 16)
 
-local statusText = label(
-    status, "● Visual", 9, C.Green
-)
-statusText.Position = UDim2.new(0, 8, 0, 21)
-statusText.Size = UDim2.new(1, -10, 0, 15)
+-- BOTON FLOTANTE
+local Float = new("TextButton", {
+    Name = "FloatingButton",
+    Size = UDim2.fromOffset(55, 55),
+    Position = UDim2.new(0, 18, 0.45, 0),
+    BackgroundColor3 = BG,
+    Text = "D",
+    TextColor3 = CYAN,
+    TextSize = 30,
+    Font = Enum.Font.GothamBlack,
+    AutoButtonColor = false,
+    ZIndex = 100
+}, ScreenGui)
 
---========================================
--- CONTENIDO CENTRAL
---========================================
+corner(Float, 50)
+stroke(Float, CYAN, 2)
 
-local content = Instance.new("Frame")
-content.Size = UDim2.new(1, -132, 1, -70)
-content.Position = UDim2.new(0, 125, 0, 65)
-content.BackgroundTransparency = 1
-content.Parent = main
+-- VENTANA PRINCIPAL
+local Main = new("Frame", {
+    Name = "Main",
+    Size = UDim2.fromOffset(BASE_WIDTH, BASE_HEIGHT),
+    AnchorPoint = Vector2.new(0.5, 0.5),
+    Position = UDim2.new(0.5, 0, 0.5, 0),
+    BackgroundColor3 = BG,
+    BorderSizePixel = 0,
+    Visible = false,
+    ZIndex = 1
+}, ScreenGui)
 
-local pageTitle = label(
-    content, "Principal", 20, C.White, Enum.Font.GothamBold
-)
-pageTitle.Size = UDim2.new(1, -10, 0, 30)
-pageTitle.Position = UDim2.new(0, 5, 0, 3)
+corner(Main, 17)
+stroke(Main, BLUE, 2)
 
-local subtitle = label(
-    content, "Funciones generales y de uso rápido.", 10, C.Gray
-)
-subtitle.Size = UDim2.new(1, -10, 0, 22)
-subtitle.Position = UDim2.new(0, 5, 0, 29)
+new("UIScale", {
+    Scale = scale
+}, Main)
 
-local page = Instance.new("ScrollingFrame")
-page.Size = UDim2.new(1, -5, 1, -60)
-page.Position = UDim2.new(0, 3, 0, 55)
-page.BackgroundTransparency = 1
-page.BorderSizePixel = 0
-page.ScrollBarThickness = 3
-page.ScrollBarImageColor3 = C.Blue
-page.CanvasSize = UDim2.new(0, 0, 0, 0)
-page.AutomaticCanvasSize = Enum.AutomaticSize.Y
-page.ScrollingDirection = Enum.ScrollingDirection.Y
-page.Parent = content
+-- CABECERA
+local Header = new("Frame", {
+    Size = UDim2.new(1, 0, 0, 52),
+    BackgroundColor3 = PANEL,
+    BorderSizePixel = 0
+}, Main)
 
-local layout = Instance.new("UIGridLayout")
-layout.CellSize = UDim2.new(0.5, -6, 0, 62)
-layout.CellPadding = UDim2.new(0, 7, 0, 8)
-layout.SortOrder = Enum.SortOrder.LayoutOrder
-layout.Parent = page
+corner(Header, 15)
 
-local padding = Instance.new("UIPadding")
-padding.PaddingTop = UDim.new(0, 4)
-padding.PaddingLeft = UDim.new(0, 3)
-padding.PaddingRight = UDim.new(0, 3)
-padding.Parent = page
+new("TextLabel", {
+    Size = UDim2.new(1, -110, 1, 0),
+    Position = UDim2.fromOffset(15, 0),
+    BackgroundTransparency = 1,
+    Text = "◆ DANIELHUB",
+    TextColor3 = CYAN,
+    Font = Enum.Font.GothamBlack,
+    TextSize = 21,
+    TextXAlignment = Enum.TextXAlignment.Left
+}, Header)
 
---========================================
--- INTERRUPTORES VISUALES
---========================================
+local Version = new("TextLabel", {
+    Size = UDim2.fromOffset(42, 22),
+    Position = UDim2.fromOffset(205, 15),
+    BackgroundColor3 = ITEM,
+    Text = "v1.7",
+    TextColor3 = WHITE,
+    TextSize = 10,
+    Font = Enum.Font.GothamBold
+}, Header)
 
-local function createToggle(title, description, order)
-    local card = Instance.new("Frame")
-    card.BackgroundColor3 = C.Card
-    card.LayoutOrder = order
-    card.Parent = page
+corner(Version, 5)
 
-    corner(card, 9)
-    stroke(card, C.Blue, 1, 0.55)
+local Minimize = new("TextButton", {
+    Size = UDim2.fromOffset(30, 30),
+    Position = UDim2.new(1, -69, 0, 11),
+    BackgroundColor3 = ITEM,
+    Text = "−",
+    TextColor3 = CYAN,
+    TextSize = 21,
+    Font = Enum.Font.GothamBold
+}, Header)
 
-    local name = label(
-        card, title, 11, C.White, Enum.Font.GothamBold
-    )
-    name.Position = UDim2.new(0, 9, 0, 7)
-    name.Size = UDim2.new(1, -48, 0, 19)
+corner(Minimize, 7)
 
-    local desc = label(card, description, 8, C.Gray)
-    desc.Position = UDim2.new(0, 9, 0, 29)
-    desc.Size = UDim2.new(1, -15, 0, 17)
+local Close = new("TextButton", {
+    Size = UDim2.fromOffset(30, 30),
+    Position = UDim2.new(1, -35, 0, 11),
+    BackgroundColor3 = ITEM,
+    Text = "×",
+    TextColor3 = WHITE,
+    TextSize = 19,
+    Font = Enum.Font.GothamBold
+}, Header)
 
-    local toggle = Instance.new("TextButton")
-    toggle.Size = UDim2.new(0, 34, 0, 19)
-    toggle.Position = UDim2.new(1, -41, 0, 10)
-    toggle.BackgroundColor3 = Color3.fromRGB(55, 65, 80)
-    toggle.Text = ""
-    toggle.Parent = card
-    toggle.AutoButtonColor = false
+corner(Close, 7)
+
+-- BARRA LATERAL
+local Sidebar = new("Frame", {
+    Size = UDim2.new(0, 112, 1, -61),
+    Position = UDim2.fromOffset(7, 57),
+    BackgroundColor3 = PANEL,
+    BorderSizePixel = 0
+}, Main)
+
+corner(Sidebar, 12)
+
+new("UIPadding", {
+    PaddingTop = UDim.new(0, 7),
+    PaddingLeft = UDim.new(0, 5),
+    PaddingRight = UDim.new(0, 5)
+}, Sidebar)
+
+new("UIListLayout", {
+    Padding = UDim.new(0, 6),
+    SortOrder = Enum.SortOrder.LayoutOrder
+}, Sidebar)
+
+-- CONTENIDO
+local Content = new("Frame", {
+    Size = UDim2.new(1, -136, 1, -65),
+    Position = UDim2.fromOffset(124, 59),
+    BackgroundTransparency = 1,
+    ClipsDescendants = true
+}, Main)
+
+local Pages = {}
+local Tabs = {}
+
+-- CREAR PAGINAS
+local function createPage(name)
+
+    local page = new("ScrollingFrame", {
+        Name = name,
+        Size = UDim2.fromScale(1, 1),
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        ScrollBarThickness = 2,
+        ScrollBarImageColor3 = BLUE,
+        CanvasSize = UDim2.new(0, 0, 0, 0),
+        Visible = false
+    }, Content)
+
+    local layout = new("UIListLayout", {
+        Padding = UDim.new(0, 6),
+        SortOrder = Enum.SortOrder.LayoutOrder
+    }, page)
+
+    layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        page.CanvasSize = UDim2.new(
+            0, 0, 0,
+            layout.AbsoluteContentSize.Y + 8
+        )
+    end)
+
+    Pages[name] = page
+    return page
+end
+
+-- TITULOS
+local function label(parent, text, size)
+
+    return new("TextLabel", {
+        Size = UDim2.new(1, -5, 0, size or 32),
+        BackgroundTransparency = 1,
+        Text = text,
+        TextColor3 = WHITE,
+        TextSize = 16,
+        Font = Enum.Font.GothamBold,
+        TextXAlignment = Enum.TextXAlignment.Left
+    }, parent)
+end
+
+local function description(parent, text)
+
+    return new("TextLabel", {
+        Size = UDim2.new(1, -5, 0, 23),
+        BackgroundTransparency = 1,
+        Text = text,
+        TextColor3 = GRAY,
+        TextSize = 10,
+        Font = Enum.Font.Gotham,
+        TextXAlignment = Enum.TextXAlignment.Left
+    }, parent)
+end
+
+-- BOTONES VISUALES
+local function visualButton(parent, text, icon)
+
+    local btn = new("TextButton", {
+        Size = UDim2.new(1, -5, 0, 36),
+        BackgroundColor3 = ITEM,
+        Text = (icon or "◆") .. "   " .. text,
+        TextColor3 = WHITE,
+        TextSize = 11,
+        Font = Enum.Font.GothamBold,
+        AutoButtonColor = false
+    }, parent)
+
+    corner(btn, 8)
+    stroke(btn, BLUE, 1)
+
+    return btn
+end
+
+-- TOGGLES VISUALES
+local function visualToggle(parent, text, icon)
+
+    local box = new("Frame", {
+        Size = UDim2.new(1, -5, 0, 39),
+        BackgroundColor3 = ITEM
+    }, parent)
+
+    corner(box, 8)
+    stroke(box, BLUE, 1)
+
+    new("TextLabel", {
+        Size = UDim2.new(1, -48, 1, 0),
+        Position = UDim2.fromOffset(7, 0),
+        BackgroundTransparency = 1,
+        Text = (icon or "◆") .. " " .. text,
+        TextColor3 = WHITE,
+        TextSize = 10,
+        Font = Enum.Font.GothamBold,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        ZIndex = 4
+    }, box)
+
+    local toggle = new("Frame", {
+        Size = UDim2.fromOffset(32, 18),
+        Position = UDim2.new(1, -39, 0.5, -9),
+        BackgroundColor3 = Color3.fromRGB(50, 60, 75),
+        ZIndex = 4
+    }, box)
 
     corner(toggle, 20)
 
-    local circle = Instance.new("Frame")
-    circle.Size = UDim2.new(0, 13, 0, 13)
-    circle.Position = UDim2.new(0, 3, 0.5, -6)
-    circle.BackgroundColor3 = C.White
-    circle.Parent = toggle
+    local dot = new("Frame", {
+        Size = UDim2.fromOffset(12, 12),
+        Position = UDim2.fromOffset(3, 3),
+        BackgroundColor3 = WHITE,
+        ZIndex = 5
+    }, toggle)
 
-    corner(circle, 20)
+    corner(dot, 20)
 
     local enabled = false
 
-    toggle.Activated:Connect(function()
+    local touchButton = new("TextButton", {
+        Name = "TouchButton",
+        Size = UDim2.fromScale(1, 1),
+        Position = UDim2.fromScale(0, 0),
+        BackgroundTransparency = 1,
+        Text = "",
+        AutoButtonColor = false,
+        ZIndex = 10
+    }, box)
+
+    touchButton.Activated:Connect(function()
+
         enabled = not enabled
 
-        TweenService:Create(
-            toggle,
-            TweenInfo.new(0.2),
-            {
-                BackgroundColor3 = enabled
-                    and C.Blue
-                    or Color3.fromRGB(55, 65, 80)
-            }
-        ):Play()
+        TweenService:Create(toggle, TweenInfo.new(0.15), {
+            BackgroundColor3 = enabled
+                and BLUE
+                or Color3.fromRGB(50, 60, 75)
+        }):Play()
 
-        TweenService:Create(
-            circle,
-            TweenInfo.new(0.2),
-            {
-                Position = enabled
-                    and UDim2.new(1, -16, 0.5, -6)
-                    or UDim2.new(0, 3, 0.5, -6)
-            }
-        ):Play()
+        TweenService:Create(dot, TweenInfo.new(0.15), {
+            Position = enabled
+                and UDim2.fromOffset(17, 3)
+                or UDim2.fromOffset(3, 3)
+        }):Play()
+
     end)
 
-    return card
+    return box
 end
 
---========================================
--- CONTROLES NUMERICOS VISUALES
---========================================
+-- CONTROLES DE VELOCIDAD
+local function speedControl(parent, title)
 
-local function createNumber(title, initial, order)
-    local card = Instance.new("Frame")
-    card.BackgroundColor3 = C.Card
-    card.LayoutOrder = order
-    card.Parent = page
+    local row = new("Frame", {
+        Size = UDim2.new(1, -5, 0, 48),
+        BackgroundColor3 = ITEM,
+        BorderSizePixel = 0
+    }, parent)
 
-    corner(card, 9)
-    stroke(card, C.Blue, 1, 0.55)
+    corner(row, 7)
+    stroke(row, Color3.fromRGB(30, 70, 105), 1)
 
-    local name = label(
-        card, title, 10, C.White, Enum.Font.GothamBold
-    )
-    name.Position = UDim2.new(0, 8, 0, 5)
-    name.Size = UDim2.new(1, -10, 0, 18)
+    new("TextLabel", {
+        Size = UDim2.fromOffset(70, 35),
+        Position = UDim2.fromOffset(9, 0),
+        BackgroundTransparency = 1,
+        Text = title,
+        TextColor3 = WHITE,
+        TextSize = 11,
+        Font = Enum.Font.GothamBold,
+        TextXAlignment = Enum.TextXAlignment.Left
+    }, row)
 
-    local value = initial
+    local value = 0
 
-    local minus = makeButton(
-        card, "−",
-        UDim2.new(0, 27, 0, 22),
-        UDim2.new(0.5, -48, 0, 32)
-    )
+    local function makeArrow(text, x, callback)
 
-    local number = label(
-        card, tostring(value), 11, C.Bright, Enum.Font.GothamBold
-    )
-    number.TextXAlignment = Enum.TextXAlignment.Center
-    number.Position = UDim2.new(0.5, -15, 0, 32)
-    number.Size = UDim2.new(0, 30, 0, 22)
+        local button = new("TextButton", {
+            Size = UDim2.fromOffset(29, 29),
+            Position = UDim2.new(0, x, 0.5, -14),
+            BackgroundColor3 = Color3.fromRGB(20, 48, 75),
+            Text = text,
+            TextColor3 = CYAN,
+            TextSize = 13,
+            Font = Enum.Font.GothamBold,
+            AutoButtonColor = false
+        }, row)
 
-    local plus = makeButton(
-        card, "+",
-        UDim2.new(0, 27, 0, 22),
-        UDim2.new(0.5, 20, 0, 32)
-    )
+        corner(button, 6)
+        button.Activated:Connect(callback)
 
-    minus.Activated:Connect(function()
-        value = math.max(0, value - 10)
+        return button
+    end
+
+    local number = new("TextLabel", {
+        Size = UDim2.fromOffset(42, 29),
+        Position = UDim2.new(0, 171, 0.5, -14),
+        BackgroundColor3 = Color3.fromRGB(5, 17, 31),
+        Text = "0",
+        TextColor3 = CYAN,
+        TextSize = 12,
+        Font = Enum.Font.GothamBold
+    }, row)
+
+    corner(number, 6)
+
+    local function change(amount)
+        value = math.max(0, value + amount)
         number.Text = tostring(value)
+    end
+
+    makeArrow("≪", 75, function()
+        change(-50)
     end)
 
-    plus.Activated:Connect(function()
-        value = value + 10
-        number.Text = tostring(value)
+    makeArrow("<", 108, function()
+        change(-1)
     end)
 
-    return card
+    makeArrow(">", 222, function()
+        change(1)
+    end)
+
+    makeArrow("≫", 255, function()
+        change(50)
+    end)
+
+    return row
 end
 
---========================================
--- ACCIONES VISUALES
---========================================
+-- =================================
+-- PAGINA 1: PRINCIPAL
+-- =================================
 
-local function createAction(title, order)
-    local card = makeButton(
-        page,
-        "✦  " .. title,
-        UDim2.new(0, 0, 0, 43),
-        UDim2.new(0, 0, 0, 0)
-    )
+local principal = createPage("Principal")
 
-    card.LayoutOrder = order
-    card.BackgroundColor3 = C.Card
-    card.TextSize = 10
+label(principal, "⌂  Principal", 29)
 
-    card.Activated:Connect(function()
-        local old = card.BackgroundColor3
+description(
+    principal,
+    "Funciones generales y de uso rápido."
+)
 
-        TweenService:Create(
-            card,
-            TweenInfo.new(0.15),
-            {BackgroundColor3 = C.Blue}
-        ):Play()
+local toggleGrid = new("Frame", {
+    Size = UDim2.new(1, -5, 0, 126),
+    BackgroundTransparency = 1
+}, principal)
 
-        task.delay(0.2, function()
-            if card.Parent then
-                card.BackgroundColor3 = old
-            end
-        end)
-    end)
+new("UIGridLayout", {
+    CellSize = UDim2.new(0.5, -4, 0, 38),
+    CellPadding = UDim2.fromOffset(8, 6),
+    SortOrder = Enum.SortOrder.LayoutOrder
+}, toggleGrid)
 
-    return card
-end
+visualToggle(toggleGrid, "Volar", "✈")
+visualToggle(toggleGrid, "Caminar", "➤")
+visualToggle(toggleGrid, "Salto infinito", "↟")
+visualToggle(toggleGrid, "Noclip", "▣")
+visualToggle(toggleGrid, "Salto alto", "⇧")
+visualToggle(toggleGrid, "Rayos X", "⌕")
 
---========================================
--- CAMBIAR PAGINAS
---========================================
+label(principal, "≫  Velocidad", 25)
 
-local function clearPage()
-    for _, obj in ipairs(page:GetChildren()) do
-        if obj ~= layout and obj ~= padding then
-            obj:Destroy()
+speedControl(principal, "Volar")
+speedControl(principal, "Caminar")
+speedControl(principal, "Salto")
+
+-- =================================
+-- PAGINA 2: TP
+-- =================================
+
+local tp = createPage("TP")
+
+label(tp, "◎  TP")
+description(tp, "Sistema de teletransportación.")
+
+visualButton(tp, "Guardar posición", "＋")
+visualButton(tp, "Ir a posición guardada", "◎")
+visualButton(tp, "Coordenadas", "⌖")
+visualButton(tp, "Ubicaciones guardadas", "▣")
+
+-- =================================
+-- PAGINA 3: TP JUGADORES
+-- SOLO ACTUALIZAR Y MOSTRAR JUGADORES
+-- =================================
+
+local tpplayer = createPage("TP Jugadores")
+
+label(tpplayer, "♙  TP Jugadores", 29)
+
+description(
+    tpplayer,
+    "Lista de jugadores disponibles en el servidor."
+)
+
+-- BOTON ACTUALIZAR
+local refreshButton = visualButton(
+    tpplayer,
+    "Actualizar jugadores",
+    "⟳"
+)
+
+refreshButton.Size = UDim2.new(1, -5, 0, 40)
+
+-- CONTADOR
+local playerCount = new("TextLabel", {
+    Size = UDim2.new(1, -5, 0, 25),
+    BackgroundTransparency = 1,
+    Text = "Jugadores encontrados: 0",
+    TextColor3 = CYAN,
+    TextSize = 11,
+    Font = Enum.Font.GothamBold,
+    TextXAlignment = Enum.TextXAlignment.Left
+}, tpplayer)
+
+-- CONTENEDOR DE JUGADORES
+local playerList = new("Frame", {
+    Name = "PlayerList",
+    Size = UDim2.new(1, -5, 0, 36),
+    BackgroundTransparency = 1
+}, tpplayer)
+
+local playerLayout = new("UIListLayout", {
+    Padding = UDim.new(0, 5),
+    SortOrder = Enum.SortOrder.LayoutOrder
+}, playerList)
+
+-- ACTUALIZAR LISTA
+local function refreshPlayers()
+
+    -- LIMPIAR LISTA ANTERIOR
+    for _, child in ipairs(playerList:GetChildren()) do
+        if child:IsA("Frame") then
+            child:Destroy()
         end
     end
-end
 
-local function setPage(name)
-    selectedTab = name
-    clearPage()
+    -- OBTENER JUGADORES ACTUALES
+    local currentPlayers = Players:GetPlayers()
 
-    for tabName, button in pairs(tabs) do
-        if tabName == name then
-            button.BackgroundTransparency = 0
-            button.BackgroundColor3 = C.Blue
-            button.TextColor3 = C.White
-        else
-            button.BackgroundTransparency = 1
-            button.TextColor3 = C.Gray
-        end
-    end
-
-    page.CanvasPosition = Vector2.new(0, 0)
-    pageTitle.Text = name
-
-    local descriptions = {
-        Principal = "Funciones generales y de uso rápido.",
-        Jugador = "Opciones de personalización del jugador.",
-        Mundo = "Herramientas de exploración.",
-        Utilidades = "Herramientas adicionales.",
-        Ajustes = "Personaliza tu interfaz.",
-        Información = "Información de DanielHub v2."
-    }
-
-    subtitle.Text = descriptions[name] or ""
-
-    if name == "Principal" then
-        createToggle("Caminar rápido", "Aumenta tu velocidad.", 1)
-        createToggle("Salto infinito", "Salta sin límite.", 2)
-        createToggle("Volar", "Activa el modo vuelo.", 3)
-        createToggle("Noclip", "Atravesar paredes.", 4)
-        createNumber("Velocidad (WalkSpeed)", 50, 5)
-        createNumber("Fuerza de salto", 100, 6)
-        createAction("Reiniciar personaje", 7)
-        createAction("Teletransportar", 8)
-        createAction("Limpiar mapa", 9)
-
-    elseif name == "Jugador" then
-        createToggle("ESP jugadores", "Visualización de jugadores.", 1)
-        createToggle("Mostrar nombres", "Ver nombres en pantalla.", 2)
-        createToggle("Mostrar distancia", "Distancia entre jugadores.", 3)
-        createNumber("Velocidad", 50, 4)
-        createNumber("Fuerza de salto", 100, 5)
-
-    elseif name == "Mundo" then
-        createToggle("Exploración", "Opciones de exploración.", 1)
-        createToggle("Iluminación", "Ajustes visuales del entorno.", 2)
-        createToggle("Vista nocturna", "Modo visual nocturno.", 3)
-        createAction("Restablecer vista", 4)
-
-    elseif name == "Utilidades" then
-        createAction("Herramienta 1", 1)
-        createAction("Herramienta 2", 2)
-        createAction("Herramienta 3", 3)
-        createAction("Herramienta 4", 4)
-
-    elseif name == "Ajustes" then
-        createToggle("Efectos neón", "Iluminación de la interfaz.", 1)
-        createToggle("Animaciones", "Animaciones de botones.", 2)
-        createToggle("Sonidos", "Efectos de sonido.", 3)
-        createAction("Restablecer interfaz", 4)
-
-    elseif name == "Información" then
-        createAction("DANIELHUB v2", 1)
-        createAction("Versión: 2.0", 2)
-        createAction("Interfaz visual", 3)
-        createAction("Desarrollado por Daniel", 4)
-    end
-end
-
-for name, button in pairs(tabs) do
-    button.Activated:Connect(function()
-        setPage(name)
+    -- ORDENAR POR NOMBRE
+    table.sort(currentPlayers, function(a, b)
+        return a.Name:lower() < b.Name:lower()
     end)
-end
 
-setPage("Principal")
+    local total = #currentPlayers
 
---========================================
--- MINIMIZAR Y CERRAR
---========================================
+    playerCount.Text = "Jugadores encontrados: " .. total
 
-local floating = Instance.new("TextButton")
-floating.Size = UDim2.new(0, 52, 0, 52)
-floating.Position = UDim2.new(0, 15, 0.7, 0)
-floating.BackgroundColor3 = C.Panel
-floating.Text = "⚡"
-floating.TextSize = 27
-floating.TextColor3 = C.Bright
-floating.Visible = false
-floating.AutoButtonColor = false
-floating.Parent = gui
+    -- MENSAJE SI NO HAY JUGADORES
+    if total == 0 then
 
-corner(floating, 50)
-stroke(floating, C.Bright, 2, 0)
+        local empty = new("Frame", {
+            Size = UDim2.new(1, 0, 0, 36),
+            BackgroundColor3 = ITEM
+        }, playerList)
 
-minimize.Activated:Connect(function()
-    main.Visible = false
-    floating.Visible = true
-end)
+        corner(empty, 7)
 
-floating.Activated:Connect(function()
-    main.Visible = true
-    floating.Visible = false
-end)
+        new("TextLabel", {
+            Size = UDim2.fromScale(1, 1),
+            BackgroundTransparency = 1,
+            Text = "No se encontraron jugadores",
+            TextColor3 = GRAY,
+            TextSize = 10,
+            Font = Enum.Font.Gotham,
+            TextXAlignment = Enum.TextXAlignment.Center
+        }, empty)
 
-close.Activated:Connect(function()
-    gui:Destroy()
-end)
+    else
 
---========================================
--- MOVIMIENTO MANUAL DE VENTANA
--- COMPATIBLE CON MOUSE Y TOUCH
---========================================
+        -- CREAR FILA POR JUGADOR
+        for index, target in ipairs(currentPlayers) do
 
-local dragging = false
-local dragStart
-local startPosition
-local dragInput
+            local row = new("Frame", {
+                Name = "Player_" .. index,
+                Size = UDim2.new(1, 0, 0, 36),
+                BackgroundColor3 = ITEM,
+                BorderSizePixel = 0,
+                LayoutOrder = index
+            }, playerList)
 
-top.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1
-        or input.UserInputType == Enum.UserInputType.Touch then
+            corner(row, 7)
+            stroke(row, Color3.fromRGB(30, 70, 105), 1)
 
-        dragging = true
-        dragStart = input.Position
-        startPosition = main.Position
+            new("TextLabel", {
+                Size = UDim2.new(1, -16, 1, 0),
+                Position = UDim2.fromOffset(10, 0),
+                BackgroundTransparency = 1,
+                Text = "♙   " .. target.Name,
+                TextColor3 = WHITE,
+                TextSize = 11,
+                Font = Enum.Font.GothamBold,
+                TextXAlignment = Enum.TextXAlignment.Left
+            }, row)
 
-        if input.UserInputType == Enum.UserInputType.Touch then
-            dragInput = input
         end
     end
-end)
 
-UIS.InputChanged:Connect(function(input)
-    if not dragging then return end
+    -- AJUSTAR ALTURA DEL CONTENEDOR
+    task.defer(function()
 
-    local isMouse = input.UserInputType ==
-        Enum.UserInputType.MouseMovement
+        local height = playerLayout.AbsoluteContentSize.Y
 
-    local isTouch = dragInput and input == dragInput
-
-    if isMouse or isTouch then
-        local delta = input.Position - dragStart
-
-        main.Position = UDim2.new(
-            startPosition.X.Scale,
-            startPosition.X.Offset + delta.X,
-            startPosition.Y.Scale,
-            startPosition.Y.Offset + delta.Y
+        playerList.Size = UDim2.new(
+            1, -5,
+            0,
+            math.max(36, height)
         )
+
+    end)
+
+    -- ANIMACION DEL BOTON
+    refreshButton.Text = "✓   Jugadores actualizados"
+
+    task.delay(1, function()
+
+        if refreshButton and refreshButton.Parent then
+            refreshButton.Text = "⟳   Actualizar jugadores"
+        end
+
+    end)
+
+end
+
+refreshButton.Activated:Connect(refreshPlayers)
+
+-- ACTUALIZAR AL ABRIR LA SECCION POR PRIMERA VEZ
+refreshPlayers()
+
+-- =================================
+-- NAVEGACION
+-- =================================
+
+local tabNames = {
+    "Principal",
+    "TP",
+    "TP Jugadores"
+}
+
+local icons = {
+    "⌂",
+    "◎",
+    "♙"
+}
+
+local function showPage(name)
+
+    for pageName, page in pairs(Pages) do
+        page.Visible = pageName == name
     end
-end)
 
-UIS.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1
-        or input == dragInput then
+    for tabName, button in pairs(Tabs) do
 
-        dragging = false
-        dragInput = nil
+        local active = tabName == name
+
+        button.BackgroundColor3 = active
+            and Color3.fromRGB(0, 75, 125)
+            or ITEM
+
+        button.TextColor3 = active and CYAN or WHITE
     end
-end)
+end
 
---========================================
--- MOVIMIENTO DEL BOTON FLOTANTE
---========================================
+for i, name in ipairs(tabNames) do
 
-local floatingDragging = false
-local floatingStart
-local floatingPosition
-local floatingInput
-local floatingMoved = false
+    local btn = new("TextButton", {
+        Name = name,
+        Size = UDim2.new(1, 0, 0, 38),
+        BackgroundColor3 = ITEM,
+        Text = icons[i] .. "  " .. name,
+        TextColor3 = WHITE,
+        TextSize = 10,
+        Font = Enum.Font.GothamBold,
+        AutoButtonColor = false,
+        LayoutOrder = i
+    }, Sidebar)
 
-floating.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.Touch
+    corner(btn, 8)
+
+    Tabs[name] = btn
+
+    btn.Activated:Connect(function()
+        showPage(name)
+    end)
+end
+
+showPage("Principal")
+
+-- =================================
+-- ARRASTRAR VENTANA Y BOTON
+-- =================================
+
+local function makeDraggable(object, handle)
+
+    local dragging = false
+    local dragStart
+    local startPos
+
+    handle.InputBegan:Connect(function(input)
+
+        if input.UserInputType == Enum.UserInputType.Touch
         or input.UserInputType == Enum.UserInputType.MouseButton1 then
 
-        floatingDragging = true
-        floatingStart = input.Position
-        floatingPosition = floating.Position
-        floatingMoved = false
+            dragging = true
+            dragStart = input.Position
+            startPos = object.Position
 
-        if input.UserInputType == Enum.UserInputType.Touch then
-            floatingInput = input
+            input.Changed:Connect(function()
+
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+
+            end)
         end
-    end
-end)
+    end)
 
-UIS.InputChanged:Connect(function(input)
-    if not floatingDragging then return end
+    UIS.InputChanged:Connect(function(input)
 
-    local isMouse = input.UserInputType ==
-        Enum.UserInputType.MouseMovement
+        if dragging and (
+            input.UserInputType == Enum.UserInputType.Touch
+            or input.UserInputType == Enum.UserInputType.MouseMovement
+        ) then
 
-    local isTouch = floatingInput and input == floatingInput
+            local delta = input.Position - dragStart
 
-    if isMouse or isTouch then
-        local delta = input.Position - floatingStart
-
-        if delta.Magnitude > 5 then
-            floatingMoved = true
+            object.Position = UDim2.new(
+                startPos.X.Scale,
+                startPos.X.Offset + delta.X,
+                startPos.Y.Scale,
+                startPos.Y.Offset + delta.Y
+            )
         end
+    end)
+end
 
-        floating.Position = UDim2.new(
-            floatingPosition.X.Scale,
-            floatingPosition.X.Offset + delta.X,
-            floatingPosition.Y.Scale,
-            floatingPosition.Y.Offset + delta.Y
-        )
-    end
+makeDraggable(Main, Header)
+makeDraggable(Float, Float)
+
+-- =================================
+-- ABRIR Y CERRAR
+-- =================================
+
+Float.Activated:Connect(function()
+    Main.Visible = not Main.Visible
 end)
 
-UIS.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1
-        or input == floatingInput then
-
-        floatingDragging = false
-        floatingInput = nil
-    end
+Minimize.Activated:Connect(function()
+    Main.Visible = false
 end)
 
-floating.Activated:Connect(function()
-    if floatingMoved then
-        floatingMoved = false
-        return
-    end
-
-    main.Visible = true
-    floating.Visible = false
+Close.Activated:Connect(function()
+    Main.Visible = false
 end)
 
---========================================
--- FINAL
---========================================
-
-print("DanielHub v2 - Mobile Ready cargado")
+print("DANIELHUB v1.7 cargado correctamente")
