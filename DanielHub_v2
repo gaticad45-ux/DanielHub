@@ -204,6 +204,94 @@ Player.CharacterAdded:Connect(function()
     stopFlying()
 end)
 
+-- =================================
+-- SISTEMA NOCLIP DANIELHUB
+-- =================================
+
+local noclipEnabled = false
+local noclipConnection = nil
+local originalCollisions = {}
+
+local function restoreCollisions()
+
+    for part, originalValue in pairs(originalCollisions) do
+
+        if part and part.Parent then
+            part.CanCollide = originalValue
+        end
+
+    end
+
+    table.clear(originalCollisions)
+
+end
+
+local function stopNoclip()
+
+    noclipEnabled = false
+
+    if noclipConnection then
+        noclipConnection:Disconnect()
+        noclipConnection = nil
+    end
+
+    restoreCollisions()
+
+end
+
+local function startNoclip()
+
+    stopNoclip()
+
+    local character = Player.Character
+    if not character then return end
+
+    noclipEnabled = true
+
+    noclipConnection = RunService.Stepped:Connect(function()
+
+        if not noclipEnabled then return end
+
+        local currentCharacter = Player.Character
+
+        if not currentCharacter then
+            stopNoclip()
+            return
+        end
+
+        for _, part in ipairs(currentCharacter:GetDescendants()) do
+
+            if part:IsA("BasePart") then
+
+                -- GUARDAR COLISION ORIGINAL
+                if originalCollisions[part] == nil then
+                    originalCollisions[part] = part.CanCollide
+                end
+
+                -- DESACTIVAR COLISION
+                part.CanCollide = false
+
+            end
+
+        end
+
+    end)
+
+end
+
+local function setNoclip(enabled)
+
+    if enabled then
+        startNoclip()
+    else
+        stopNoclip()
+    end
+
+end
+
+Player.CharacterAdded:Connect(function()
+    stopNoclip()
+end)
 
 local function stroke(obj, color, thickness)
     local s = Instance.new("UIStroke")
@@ -616,7 +704,7 @@ new("UIGridLayout", {
 visualToggle(toggleGrid, "Volar", "✈", setFlying)
 visualToggle(toggleGrid, "Caminar", "➤")
 visualToggle(toggleGrid, "Salto infinito", "↟")
-visualToggle(toggleGrid, "Noclip", "▣")
+visualToggle(toggleGrid, "Noclip", "▣", setNoclip)
 visualToggle(toggleGrid, "Salto alto", "⇧")
 visualToggle(toggleGrid, "Rayos X", "⌕")
 
