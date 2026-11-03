@@ -10,6 +10,7 @@ local Players = game:GetService("Players")
 local UIS = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local CoreGui = game:GetService("CoreGui")
+local RunService = game:GetService("RunService")
 
 local Player = Players.LocalPlayer
 local PlayerGui = Player:WaitForChild("PlayerGui")
@@ -66,6 +67,143 @@ local function corner(obj, radius)
     c.CornerRadius = UDim.new(0, radius)
     c.Parent = obj
 end
+
+-- =================================
+-- SISTEMA DE VUELO DANIELHUB
+-- =================================
+
+local flying = false
+local flySpeed = 50
+local flightConnection = nil
+
+local flightVelocity = nil
+local flightGyro = nil
+
+local function stopFlying()
+    flying = false
+
+    if flightConnection then
+        flightConnection:Disconnect()
+        flightConnection = nil
+    end
+
+    if flightVelocity then
+        flightVelocity:Destroy()
+        flightVelocity = nil
+    end
+
+    if flightGyro then
+        flightGyro:Destroy()
+        flightGyro = nil
+    end
+
+    local character = Player.Character
+    local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+
+    if humanoid then
+        humanoid.PlatformStand = false
+        humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+    end
+end
+
+local function startFlying()
+
+    local character = Player.Character
+    if not character then return end
+
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    local root = character:FindFirstChild("HumanoidRootPart")
+
+    if not humanoid or not root then return end
+
+    stopFlying()
+
+    flying = true
+
+    flightVelocity = Instance.new("BodyVelocity")
+    flightVelocity.Name = "DanielFlyVelocity"
+    flightVelocity.MaxForce = Vector3.new(1e9, 1e9, 1e9)
+    flightVelocity.P = 25000
+    flightVelocity.Velocity = Vector3.zero
+    flightVelocity.Parent = root
+
+    flightGyro = Instance.new("BodyGyro")
+    flightGyro.Name = "DanielFlyGyro"
+    flightGyro.MaxTorque = Vector3.new(1e9, 1e9, 1e9)
+    flightGyro.P = 15000
+    flightGyro.D = 500
+    flightGyro.Parent = root
+
+    humanoid.PlatformStand = true
+
+    local playerModule = Player.PlayerScripts:FindFirstChild("PlayerModule")
+    local controls
+
+    if playerModule then
+        local ok, result = pcall(function()
+            return require(playerModule):GetControls()
+        end)
+
+        if ok then
+            controls = result
+        end
+    end
+
+    flightConnection = RunService.RenderStepped:Connect(function()
+
+        if not flying or not root.Parent then
+            stopFlying()
+            return
+        end
+
+        local camera = workspace.CurrentCamera
+        if not camera then return end
+
+        local moveVector = Vector3.zero
+
+        if controls then
+            moveVector = controls:GetMoveVector()
+        end
+
+        -- DIRECCION RELATIVA A LA CAMARA
+        local direction = camera.CFrame:VectorToWorldSpace(moveVector)
+
+        if direction.Magnitude > 1 then
+            direction = direction.Unit
+        end
+
+        -- CONTROL DE VELOCIDAD
+        flightVelocity.Velocity = direction * flySpeed
+
+        -- MANTENER EL PERSONAJE ESTABLE
+        local look = camera.CFrame.LookVector
+        local horizontalLook = Vector3.new(look.X, 0, look.Z)
+
+        if horizontalLook.Magnitude > 0.01 then
+            flightGyro.CFrame = CFrame.lookAt(
+                root.Position,
+                root.Position + horizontalLook.Unit
+            )
+        end
+
+    end)
+end
+
+local function setFlying(enabled)
+
+    if enabled then
+        startFlying()
+    else
+        stopFlying()
+    end
+
+end
+
+-- REINICIAR VUELO AL MORIR
+Player.CharacterAdded:Connect(function()
+    stopFlying()
+end)
+
 
 local function stroke(obj, color, thickness)
     local s = Instance.new("UIStroke")
@@ -289,7 +427,7 @@ local function visualButton(parent, text, icon)
 end
 
 -- TOGGLES VISUALES
-local function visualToggle(parent, text, icon)
+local function visualToggle(parent, text, icon, callback)
 
     local box = new("Frame", {
         Size = UDim2.new(1, -5, 0, 39),
@@ -332,9 +470,7 @@ local function visualToggle(parent, text, icon)
     local enabled = false
 
     local touchButton = new("TextButton", {
-        Name = "TouchButton",
         Size = UDim2.fromScale(1, 1),
-        Position = UDim2.fromScale(0, 0),
         BackgroundTransparency = 1,
         Text = "",
         AutoButtonColor = false,
@@ -356,6 +492,10 @@ local function visualToggle(parent, text, icon)
                 and UDim2.fromOffset(17, 3)
                 or UDim2.fromOffset(3, 3)
         }):Play()
+
+        if callback then
+            callback(enabled)
+        end
 
     end)
 
@@ -385,7 +525,7 @@ local function speedControl(parent, title)
         TextXAlignment = Enum.TextXAlignment.Left
     }, row)
 
-    local value = 0
+    local value = title == "Volar" and flySpeed or 0
 
     local function makeArrow(text, x, callback)
 
@@ -410,7 +550,7 @@ local function speedControl(parent, title)
         Size = UDim2.fromOffset(42, 29),
         Position = UDim2.new(0, 171, 0.5, -14),
         BackgroundColor3 = Color3.fromRGB(5, 17, 31),
-        Text = "0",
+        Text = tostring(value),
         TextColor3 = CYAN,
         TextSize = 12,
         Font = Enum.Font.GothamBold
@@ -419,9 +559,16 @@ local function speedControl(parent, title)
     corner(number, 6)
 
     local function change(amount)
-        value = math.max(0, value + amount)
-        number.Text = tostring(value)
+
+    value = math.max(0, value + amount)
+
+    number.Text = tostring(value)
+
+    if title == "Volar" then
+        flySpeed = value
     end
+
+end
 
     makeArrow("≪", 75, function()
         change(-50)
@@ -466,7 +613,7 @@ new("UIGridLayout", {
     SortOrder = Enum.SortOrder.LayoutOrder
 }, toggleGrid)
 
-visualToggle(toggleGrid, "Volar", "✈")
+visualToggle(toggleGrid, "Volar", "✈", setFlying)
 visualToggle(toggleGrid, "Caminar", "➤")
 visualToggle(toggleGrid, "Salto infinito", "↟")
 visualToggle(toggleGrid, "Noclip", "▣")
